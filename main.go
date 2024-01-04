@@ -67,7 +67,7 @@ func HandleStudent(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(id)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -114,7 +114,7 @@ func HandleStudentById(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -159,7 +159,7 @@ func HandleTeacher(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(id)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -207,7 +207,7 @@ func HandleTeacherById(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -252,7 +252,7 @@ func HandleRemark(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(id)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -300,7 +300,7 @@ func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -357,7 +357,7 @@ func HandleObservation(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(id)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -416,7 +416,7 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -461,7 +461,7 @@ func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(observations)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
@@ -506,7 +506,7 @@ func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(observations)
 			return
 		default:
-			http.Error(w, "Bad Request", 400)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 	}
 }
