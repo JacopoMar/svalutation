@@ -39,7 +39,7 @@ func HandleStudent(w http.ResponseWriter, r *http.Request) {
 			var students []Student
 			for rows.Next(){
 				var student Student
-				rows.Scan(&student.Id, &student.Name, &student.Surname)
+				rows.Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
 				students = append(students, student)
 			}
 			rows.Close()
@@ -83,7 +83,7 @@ func HandleStudentById(w http.ResponseWriter, r *http.Request) {
 		case "GET":
 			//Get existent student
 			var student Student
-			err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname)
+			err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
 			if ErrorCheck(&w, err, 500) {
 				return
 			}
@@ -224,7 +224,7 @@ func HandleRemark(w http.ResponseWriter, r *http.Request) {
 			var remarks []Remark
 			for rows.Next(){
 				var remark Remark
-				rows.Scan(&remark.Id, &remark.Level, &remark.Description)
+				rows.Scan(&remark.Id, &remark.Skill, &remark.Level, &remark.Description)
 				remarks = append(remarks, remark)
 			}
 			rows.Close()
@@ -268,7 +268,7 @@ func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
 		case "GET":
 			//Get existent remark
 			var remark Remark
-			err := DB.QueryRow("SELECT * FROM remarks WHERE id = ?", id).Scan(&remark.Id, &remark.Level, &remark.Description)
+			err := DB.QueryRow("SELECT * FROM remarks WHERE id = ?", id).Scan(&remark.Id, &remark.Skill, &remark.Level, &remark.Description)
 			if ErrorCheck(&w, err, 500) {
 				return
 			}
@@ -322,11 +322,11 @@ func HandleObservation(w http.ResponseWriter, r *http.Request) {
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
-				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname)
+				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
-				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Level, &observation.Remark.Description)
+				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
@@ -381,11 +381,11 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 			if ErrorCheck(&w, err, 500) {
 				return
 			}
-			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname)
+			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
 			if ErrorCheck(&w, err, 500) {
 				return
 			}
-			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Level, &observation.Remark.Description)
+			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
 			if ErrorCheck(&w, err, 500) {
 				return
 			}
@@ -394,7 +394,7 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(observation)
 			return
 		case "PATCH":
-			//Update existent remark
+			//Update existent observation
 			err := r.ParseForm()
 			if ErrorCheck(&w, err, 400) {
 				return
@@ -444,11 +444,11 @@ func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 				if ErrorCheck(&w, err, 500) {
 					return
 			  }
-				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname)
+				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
-				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Level, &observation.Remark.Description)
+				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
@@ -489,11 +489,11 @@ func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
-				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname)
+				err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
-				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Level, &observation.Remark.Description)
+				err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
 				if ErrorCheck(&w, err, 500) {
 					return
 				}
