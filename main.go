@@ -17,7 +17,7 @@ type Teacher = entities.Teacher
 type Remark = entities.Remark
 type Observation = entities.Observation
 
-var DB, ERR = sql.Open("sqlite3", "./database.db")
+var DB, DB_ERR = sql.Open("sqlite3", "./database.db")
 
 func errorCheck(w *http.ResponseWriter, err error, code int) bool {
 	if err != nil {
@@ -538,8 +538,8 @@ func checkCredentials(user string, password string) bool {
 }
 
 func main() {
-	if ERR != nil {
-		log.Fatal(ERR)
+	if DB_ERR != nil {
+		log.Fatal(DB_ERR)
 	}
 	defer DB.Close()
 
