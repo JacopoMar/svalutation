@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Student = entities.Student
@@ -510,6 +511,32 @@ func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func auth(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, _ := r.BasicAuth()
+		if !checkCredentials(user, pass) {
+			w.Header().Set("WWW-Authenticate", "Basic realm=\"Svalutation\"")
+			http.Error(w, "Authentication failed, you shall not pass", http.StatusUnauthorized)
+			return
+		}
+		fn(w, r)
+	}
+}
+
+func checkCredentials(user string, password string) bool {
+	type Credentials struct {
+		user     string
+		password string
+	}
+	credentials := Credentials{}
+
+	err := DB.QueryRow("SELECT * FROM credentials WHERE user = ?", user).Scan(&credentials.user, &credentials.password)
+	if err != nil {
+		log.Println("Couldn't retrieve credentials") // TODO: Manage this kind of error, it could mean the username the user provided is wrong
+	}
+	return bcrypt.CompareHashAndPassword([]byte(credentials.password), []byte(password)) == nil
+}
+
 func main() {
 	if ERR != nil {
 		log.Fatal(ERR)
@@ -517,22 +544,22 @@ func main() {
 	defer DB.Close()
 
 	//Teacher handlers
-	http.HandleFunc("/api/teachers", HandleTeacher)
-	http.HandleFunc("/api/teachers/", HandleTeacherById)
+	http.HandleFunc("/api/teachers", auth(HandleTeacher))
+	http.HandleFunc("/api/teachers/", auth(HandleTeacherById))
 
 	//Student handlers
-	http.HandleFunc("/api/students", HandleStudent)
-	http.HandleFunc("/api/students/", HandleStudentById)
+	http.HandleFunc("/api/students", auth(HandleStudent))
+	http.HandleFunc("/api/students/", auth(HandleStudentById))
 
 	//Remark handlers
-	http.HandleFunc("/api/remarks", HandleRemark)
-	http.HandleFunc("/api/remarks/", HandleRemarkById)
+	http.HandleFunc("/api/remarks", auth(HandleRemark))
+	http.HandleFunc("/api/remarks/", auth(HandleRemarkById))
 
 	//Observation handlers
-	http.HandleFunc("/api/observations", HandleObservation)
-	http.HandleFunc("/api/observations/", HandleObservationById)
-	http.HandleFunc("/api/observations/student/", HandleObservationByStudentId)
-	http.HandleFunc("/api/observations/teacher/", HandleObservationByTeacherId)
+	http.HandleFunc("/api/observations", auth(HandleObservation))
+	http.HandleFunc("/api/observations/", auth(HandleObservationById))
+	http.HandleFunc("/api/observations/student/", auth(HandleObservationByStudentId))
+	http.HandleFunc("/api/observations/teacher/", auth(HandleObservationByTeacherId))
 	http.ListenAndServe(":8080", nil)
 }
 

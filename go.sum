@@ -2,3 +2,5 @@ github.com/mattn/go-sqlite3 v1.14.18 h1:JL0eqdCOq6DJVNPSvArO/bIV9/P7fbGrV00LZHc+
 github.com/mattn/go-sqlite3 v1.14.18/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
 github.com/zitadel/oidc v1.13.5 h1:7jhh68NGZitLqwLiVU9Dtwa4IraJPFF1vS+4UupO93U=
 github.com/zitadel/oidc v1.13.5/go.mod h1:rHs1DhU3Sv3tnI6bQRVlFa3u0lCwtR7S21WHY+yXgPA=
+golang.org/x/crypto v0.17.0 h1:r8bRNjWL3GshPW3gkd+RpvzWrZAwPS49OmTGZ/uhM4k=
+golang.org/x/crypto v0.17.0/go.mod h1:gCAAfMLgwOJRpTjQ2zCCt2OcSfYMTeZVSRtQlPC7Nq4=
