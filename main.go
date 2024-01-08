@@ -19,7 +19,7 @@ type Observation = entities.Observation
 
 var DB, ERR = sql.Open("sqlite3", "./database.db")
 
-func ErrorCheck(w *http.ResponseWriter, err error, code int) bool {
+func errorCheck(w *http.ResponseWriter, err error, code int) bool {
 	if err != nil {
 		http.Error(*w, err.Error(), code)
 		return true
@@ -27,12 +27,12 @@ func ErrorCheck(w *http.ResponseWriter, err error, code int) bool {
 	return false
 }
 
-func HandleStudent(w http.ResponseWriter, r *http.Request) {
+func handleStudent(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		//Get all students
 		rows, err := DB.Query("SELECT * FROM students")
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -51,15 +51,15 @@ func HandleStudent(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		//Create new student
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		result, err := DB.Exec("INSERT INTO students (name, surname) VALUES(?, ?)", r.Form.Get("name"), r.Form.Get("surname"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		id, err := result.LastInsertId()
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -72,7 +72,7 @@ func HandleStudent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleStudentById(w http.ResponseWriter, r *http.Request) {
+func handleStudentById(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/students/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -84,7 +84,7 @@ func HandleStudentById(w http.ResponseWriter, r *http.Request) {
 		//Get existent student
 		var student Student
 		err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -94,22 +94,22 @@ func HandleStudentById(w http.ResponseWriter, r *http.Request) {
 	case "PATCH":
 		//Update existent student
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("UPDATE students SET name = ?, surname = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
 	case "DELETE":
 		//Delete existent student
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("DELETE FROM students WHERE id = ?", r.Form.Get("id"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
@@ -119,12 +119,12 @@ func HandleStudentById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleTeacher(w http.ResponseWriter, r *http.Request) {
+func handleTeacher(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		//Get all teachers
 		rows, err := DB.Query("SELECT * FROM teachers")
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -143,15 +143,15 @@ func HandleTeacher(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		//Create new teacher
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		result, err := DB.Exec("INSERT INTO teachers (name, surname) VALUES(?, ?)", r.Form.Get("name"), r.Form.Get("surname"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		id, err := result.LastInsertId()
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -164,7 +164,7 @@ func HandleTeacher(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleTeacherById(w http.ResponseWriter, r *http.Request) {
+func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/teachers/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -176,7 +176,7 @@ func HandleTeacherById(w http.ResponseWriter, r *http.Request) {
 		//Get existent teacher
 		var teacher Teacher
 		err := DB.QueryRow("SELECT * FROM teachers WHERE id = ?", id).Scan(&teacher.Id, &teacher.Name, &teacher.Surname)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -187,22 +187,22 @@ func HandleTeacherById(w http.ResponseWriter, r *http.Request) {
 	case "PATCH":
 		//Update existent teacher
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("UPDATE teachers SET name = ?, surname = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
 	case "DELETE":
 		//Delete existent teacher
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("DELETE FROM teachers WHERE id = ?", r.Form.Get("id"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
@@ -212,12 +212,12 @@ func HandleTeacherById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRemark(w http.ResponseWriter, r *http.Request) {
+func handleRemark(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		//Get all remarks
 		rows, err := DB.Query("SELECT * FROM remarks")
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -236,15 +236,15 @@ func HandleRemark(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		//Create new remark
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		result, err := DB.Exec("INSERT INTO remarks (level, description) VALUES(?, ?)", r.Form.Get("level"), r.Form.Get("description"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		id, err := result.LastInsertId()
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -257,7 +257,7 @@ func HandleRemark(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
+func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/remarks/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -269,7 +269,7 @@ func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
 		//Get existent remark
 		var remark Remark
 		err := DB.QueryRow("SELECT * FROM remarks WHERE id = ?", id).Scan(&remark.Id, &remark.Skill, &remark.Level, &remark.Description)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -280,22 +280,22 @@ func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
 	case "PATCH":
 		//Update existent remark
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("UPDATE remarks SET level = ?, description = ? WHERE id = ?", r.Form.Get("level"), r.Form.Get("description"), id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
 	case "DELETE":
 		//Delete existent remark
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("DELETE FROM remarks WHERE id = ?", r.Form.Get("id"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
@@ -305,12 +305,12 @@ func HandleRemarkById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleObservation(w http.ResponseWriter, r *http.Request) {
+func handleObservation(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		//Get all observations
 		rows, err := DB.Query("SELECT * FROM observations")
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -319,15 +319,15 @@ func HandleObservation(w http.ResponseWriter, r *http.Request) {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			observations = append(observations, observation)
@@ -341,15 +341,15 @@ func HandleObservation(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		//Create new observation
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		result, err := DB.Exec("INSERT INTO observations (teacher, student, remark, achieved) VALUES(?, ?, ?, ?)", r.Form.Get("teacher"), r.Form.Get("student"), r.Form.Get("remark"), r.Form.Get("achieved"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		id, err := result.LastInsertId()
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -362,7 +362,7 @@ func HandleObservation(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleObservationById(w http.ResponseWriter, r *http.Request) {
+func handleObservationById(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/observations/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -374,19 +374,19 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 		//Get existent observation
 		var observation Observation
 		err := DB.QueryRow("SELECT * FROM observations WHERE id = ?", id).Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -396,22 +396,22 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 	case "PATCH":
 		//Update existent observation
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("UPDATE observations SET teacher = ?, student = ?, remark = ?, achieved = ? WHERE id = ?", r.Form.Get("teacher"), r.Form.Get("student"), r.Form.Get("remark"), r.Form.Get("achieved"), id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
 	case "DELETE":
 		//Delete existent observation
 		err := r.ParseForm()
-		if ErrorCheck(&w, err, 400) {
+		if errorCheck(&w, err, 400) {
 			return
 		}
 		_, err = DB.Exec("DELETE FROM observations WHERE id = ?", r.Form.Get("id"))
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
@@ -421,7 +421,7 @@ func HandleObservationById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
+func handleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/observations/student/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -432,7 +432,7 @@ func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		//Get all observations made on student
 		rows, err := DB.Query("SELECT * FROM observations where student = ?", id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -441,15 +441,15 @@ func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			observations = append(observations, observation)
@@ -466,7 +466,7 @@ func HandleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
+func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/observations/teacher/" {
 		http.Error(w, "No id specified", 400)
 		return
@@ -477,7 +477,7 @@ func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		//Get all observations made by the teacher
 		rows, err := DB.Query("SELECT * FROM observations where teacher = ?", id)
-		if ErrorCheck(&w, err, 500) {
+		if errorCheck(&w, err, 500) {
 			return
 		}
 
@@ -486,15 +486,15 @@ func HandleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
-			if ErrorCheck(&w, err, 500) {
+			if errorCheck(&w, err, 500) {
 				return
 			}
 			observations = append(observations, observation)
@@ -544,22 +544,22 @@ func main() {
 	defer DB.Close()
 
 	//Teacher handlers
-	http.HandleFunc("/api/teachers", auth(HandleTeacher))
-	http.HandleFunc("/api/teachers/", auth(HandleTeacherById))
+	http.HandleFunc("/api/teachers", auth(handleTeacher))
+	http.HandleFunc("/api/teachers/", auth(handleTeacherById))
 
 	//Student handlers
-	http.HandleFunc("/api/students", auth(HandleStudent))
-	http.HandleFunc("/api/students/", auth(HandleStudentById))
+	http.HandleFunc("/api/students", auth(handleStudent))
+	http.HandleFunc("/api/students/", auth(handleStudentById))
 
 	//Remark handlers
-	http.HandleFunc("/api/remarks", auth(HandleRemark))
-	http.HandleFunc("/api/remarks/", auth(HandleRemarkById))
+	http.HandleFunc("/api/remarks", auth(handleRemark))
+	http.HandleFunc("/api/remarks/", auth(handleRemarkById))
 
 	//Observation handlers
-	http.HandleFunc("/api/observations", auth(HandleObservation))
-	http.HandleFunc("/api/observations/", auth(HandleObservationById))
-	http.HandleFunc("/api/observations/student/", auth(HandleObservationByStudentId))
-	http.HandleFunc("/api/observations/teacher/", auth(HandleObservationByTeacherId))
+	http.HandleFunc("/api/observations", auth(handleObservation))
+	http.HandleFunc("/api/observations/", auth(handleObservationById))
+	http.HandleFunc("/api/observations/student/", auth(handleObservationByStudentId))
+	http.HandleFunc("/api/observations/teacher/", auth(handleObservationByTeacherId))
 	http.ListenAndServe(":8080", nil)
 }
 
