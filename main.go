@@ -30,7 +30,7 @@ func errorCheck(w *http.ResponseWriter, err error, code int) bool {
 func handleStudent(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		//Get all students
+		// Get all students
 		rows, err := DB.Query("SELECT * FROM students")
 		if errorCheck(&w, err, 500) {
 			return
@@ -49,7 +49,7 @@ func handleStudent(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(students)
 		return
 	case "POST":
-		//Create new student
+		// Create new student
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -81,7 +81,7 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get existent student
+		// Get existent student
 		var student Student
 		err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
 		if errorCheck(&w, err, 500) {
@@ -92,7 +92,7 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(student)
 		return
 	case "PATCH":
-		//Update existent student
+		// Update existent student
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -103,7 +103,7 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case "DELETE":
-		//Delete existent student
+		// Delete existent student
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -122,7 +122,7 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 func handleTeacher(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		//Get all teachers
+		// Get all teachers
 		rows, err := DB.Query("SELECT * FROM teachers")
 		if errorCheck(&w, err, 500) {
 			return
@@ -141,7 +141,7 @@ func handleTeacher(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(teachers)
 		return
 	case "POST":
-		//Create new teacher
+		// Create new teacher
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -173,7 +173,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get existent teacher
+		// Get existent teacher
 		var teacher Teacher
 		err := DB.QueryRow("SELECT * FROM teachers WHERE id = ?", id).Scan(&teacher.Id, &teacher.Name, &teacher.Surname)
 		if errorCheck(&w, err, 500) {
@@ -185,7 +185,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(teacher)
 		return
 	case "PATCH":
-		//Update existent teacher
+		// Update existent teacher
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -196,7 +196,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case "DELETE":
-		//Delete existent teacher
+		// Delete existent teacher
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -215,7 +215,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 func handleRemark(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		//Get all remarks
+		// Get all remarks
 		rows, err := DB.Query("SELECT * FROM remarks")
 		if errorCheck(&w, err, 500) {
 			return
@@ -234,7 +234,7 @@ func handleRemark(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(remarks)
 		return
 	case "POST":
-		//Create new remark
+		// Create new remark
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -266,7 +266,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get existent remark
+		// Get existent remark
 		var remark Remark
 		err := DB.QueryRow("SELECT * FROM remarks WHERE id = ?", id).Scan(&remark.Id, &remark.Skill, &remark.Level, &remark.Description)
 		if errorCheck(&w, err, 500) {
@@ -278,7 +278,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(remark)
 		return
 	case "PATCH":
-		//Update existent remark
+		// Update existent remark
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -289,7 +289,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case "DELETE":
-		//Delete existent remark
+		// Delete existent remark
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -308,7 +308,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 func handleObservation(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		//Get all observations
+		// Get all observations
 		rows, err := DB.Query("SELECT * FROM observations")
 		if errorCheck(&w, err, 500) {
 			return
@@ -339,7 +339,7 @@ func handleObservation(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(observations)
 		return
 	case "POST":
-		//Create new observation
+		// Create new observation
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -371,7 +371,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get existent observation
+		// Get existent observation
 		var observation Observation
 		err := DB.QueryRow("SELECT * FROM observations WHERE id = ?", id).Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 		if errorCheck(&w, err, 500) {
@@ -405,7 +405,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case "DELETE":
-		//Delete existent observation
+		// Delete existent observation
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -430,7 +430,7 @@ func handleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get all observations made on student
+		// Get all observations made on student
 		rows, err := DB.Query("SELECT * FROM observations where student = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
@@ -475,7 +475,7 @@ func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		//Get all observations made by the teacher
+		// Get all observations made by the teacher
 		rows, err := DB.Query("SELECT * FROM observations where teacher = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
@@ -543,19 +543,19 @@ func main() {
 	}
 	defer DB.Close()
 
-	//Teacher handlers
+	// Teacher handlers
 	http.HandleFunc("/api/teachers", auth(handleTeacher))
 	http.HandleFunc("/api/teachers/", auth(handleTeacherById))
 
-	//Student handlers
+	// Student handlers
 	http.HandleFunc("/api/students", auth(handleStudent))
 	http.HandleFunc("/api/students/", auth(handleStudentById))
 
-	//Remark handlers
+	// Remark handlers
 	http.HandleFunc("/api/remarks", auth(handleRemark))
 	http.HandleFunc("/api/remarks/", auth(handleRemarkById))
 
-	//Observation handlers
+	// Observation handlers
 	http.HandleFunc("/api/observations", auth(handleObservation))
 	http.HandleFunc("/api/observations/", auth(handleObservationById))
 	http.HandleFunc("/api/observations/student/", auth(handleObservationByStudentId))
@@ -563,4 +563,4 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-//Note: request form only accepts content-type: application/x-www-form-urlencoded
+// Note: request form only accepts content-type: application/x-www-form-urlencoded
