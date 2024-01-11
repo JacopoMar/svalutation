@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -19,9 +20,11 @@ type Observation = entities.Observation
 type Class = entities.Class
 
 type IgnoreColumn struct{}
+
 var IGNORE IgnoreColumn
+
 func (IgnoreColumn) Scan(value interface{}) error {
-    return nil
+	return nil
 }
 
 var DB, DB_ERR = sql.Open("sqlite3", "./database.db")
@@ -143,7 +146,7 @@ func handleStudentsByClass(w http.ResponseWriter, r *http.Request) {
 	}
 	id := strings.TrimPrefix(r.URL.Path, "/api/students/class/")
 
-	if (r.Method == "GET") {
+	if r.Method == "GET" {
 		//Get all students
 		rows, err := DB.Query("SELECT * FROM students WHERE class = ?", id)
 		if errorCheck(&w, err, 500) {
@@ -151,7 +154,7 @@ func handleStudentsByClass(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var students []Student
-		for rows.Next(){
+		for rows.Next() {
 			var student Student
 			rows.Scan(&student.Id, &student.Name, &student.Surname, &student.Class.Id)
 			err := DB.QueryRow("SELECT * FROM classes where id = ?", student.Class.Id).Scan(&student.Class.Id, &student.Class.Name)
@@ -192,7 +195,7 @@ func handleTeacher(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var classes []Class
-			for rows.Next(){
+			for rows.Next() {
 				var class Class
 				rows.Scan(IGNORE, IGNORE, &class.Id)
 				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -239,7 +242,7 @@ func handleTeacher(w http.ResponseWriter, r *http.Request) {
 			if errorCheck(&w, err, 500) {
 				return
 			}
-		}		
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -272,7 +275,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var classes []Class
-		for rows.Next(){
+		for rows.Next() {
 			var class Class
 			rows.Scan(IGNORE, IGNORE, &class.Id)
 			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -299,7 +302,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if(r.Form.Has("classes")) {
+		if r.Form.Has("classes") {
 			_, err := DB.Exec("DELETE FROM classes_teachers WHERE teacher_id = ?", id)
 			if errorCheck(&w, err, 500) {
 				return
@@ -316,7 +319,7 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 				if errorCheck(&w, err, 500) {
 					return
 				}
-			}	
+			}
 		}
 		return
 	case "DELETE":
@@ -456,7 +459,7 @@ func handleObservation(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var classes []Class
-			for rows.Next(){
+			for rows.Next() {
 				var class Class
 				rows.Scan(IGNORE, IGNORE, &class.Id)
 				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -532,7 +535,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var classes []Class
-		for rows.Next(){
+		for rows.Next() {
 			var class Class
 			rows.Scan(IGNORE, IGNORE, &class.Id)
 			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -607,7 +610,7 @@ func handleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var observations []Observation
-		for rows.Next(){
+		for rows.Next() {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
@@ -616,7 +619,7 @@ func handleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var classes []Class
-			for rows.Next(){
+			for rows.Next() {
 				var class Class
 				rows.Scan(IGNORE, IGNORE, &class.Id)
 				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -673,7 +676,7 @@ func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var observations []Observation
-		for rows.Next(){
+		for rows.Next() {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
@@ -682,7 +685,7 @@ func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var classes []Class
-			for rows.Next(){
+			for rows.Next() {
 				var class Class
 				rows.Scan(IGNORE, IGNORE, &class.Id)
 				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -732,8 +735,8 @@ func handleObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request
 	trimmedString := strings.TrimPrefix(r.URL.Path, "/api/observations/teacher/student/")
 	teacherId := trimmedString[:strings.IndexByte(trimmedString, '/')]
 	studentId := strings.TrimPrefix(trimmedString, teacherId+"/")
-	
-	if(r.Method == "GET") {
+
+	if r.Method == "GET" {
 		//Get all observations made by the teacher on the student
 		rows, err := DB.Query("SELECT * FROM observations where teacher = ? and student = ?", teacherId, studentId)
 		if errorCheck(&w, err, 500) {
@@ -741,7 +744,7 @@ func handleObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request
 		}
 
 		var observations []Observation
-		for rows.Next(){
+		for rows.Next() {
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
 			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
@@ -749,7 +752,7 @@ func handleObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var classes []Class
-			for rows.Next(){
+			for rows.Next() {
 				var class Class
 				rows.Scan(IGNORE, IGNORE, &class.Id)
 				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
@@ -812,7 +815,7 @@ func checkCredentials(user string, password string) bool {
 
 	err := DB.QueryRow("SELECT * FROM credentials WHERE user = ?", user).Scan(&credentials.user, &credentials.password)
 	if err != nil {
-		log.Println("Couldn't retrieve credentials") // TODO: Manage this kind of error, it could mean the username the user provided is wrong
+		slog.Error("Couldn't retrieve credentials") // TODO: Manage this kind of error, it could mean the username the user provided is wrong
 	}
 	return bcrypt.CompareHashAndPassword([]byte(credentials.password), []byte(password)) == nil
 }
@@ -827,6 +830,7 @@ func main() {
 	http.HandleFunc("/api/students", auth(handleStudent))
 	http.HandleFunc("/api/students/", auth(handleStudentById))
 	http.HandleFunc("/api/students/class/", auth(handleStudentsByClass))
+	slog.Info("Loaded database")
 
 	// Teacher handlers
 	http.HandleFunc("/api/teachers", auth(handleTeacher))
@@ -842,6 +846,8 @@ func main() {
 	http.HandleFunc("/api/observations/student/", auth(handleObservationByStudentId))
 	http.HandleFunc("/api/observations/teacher/", auth(handleObservationByTeacherId))
 	http.HandleFunc("/api/observations/teacher/student/", auth(handleObservationsByTeacherOnStudent))
+
+	slog.Info("Starting server")
 	http.ListenAndServe(":8080", nil)
 }
 
