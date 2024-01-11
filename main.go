@@ -568,7 +568,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(observation)
 		return
 	case "PATCH":
-		//Update existent observation
+		// Update existent observation
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
