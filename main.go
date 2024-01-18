@@ -16,6 +16,13 @@ type Student = entities.Student
 type Teacher = entities.Teacher
 type Remark = entities.Remark
 type Observation = entities.Observation
+type Class = entities.Class
+
+type IgnoreColumn struct{}
+var IGNORE IgnoreColumn
+func (IgnoreColumn) Scan(value interface{}) error {
+    return nil
+}
 
 var DB, DB_ERR = sql.Open("sqlite3", "./database.db")
 
@@ -39,7 +46,12 @@ func handleStudent(w http.ResponseWriter, r *http.Request) {
 		var students []Student
 		for rows.Next() {
 			var student Student
-			rows.Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
+			rows.Scan(&student.Id, &student.Name, &student.Surname, &student.Class.Id)
+			err := DB.QueryRow("SELECT * FROM classes WHERE id = ?", student.Class.Id).Scan(&student.Class.Id, &student.Class.Name)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
 			students = append(students, student)
 		}
 		rows.Close()
@@ -54,7 +66,7 @@ func handleStudent(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		result, err := DB.Exec("INSERT INTO students (name, surname) VALUES(?, ?)", r.Form.Get("name"), r.Form.Get("surname"))
+		result, err := DB.Exec("INSERT INTO students (name, surname, class) VALUES(?, ?, ?)", r.Form.Get("name"), r.Form.Get("surname"), r.Form.Get("class"))
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -97,7 +109,7 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("UPDATE students SET name = ?, surname = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), id)
+		_, err = DB.Exec("UPDATE students SET name = ?, surname = ?, class = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), r.Form.Get("class"), id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -108,12 +120,49 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("DELETE FROM students WHERE id = ?", r.Form.Get("id"))
+		_, err = DB.Exec("DELETE FROM students WHERE id = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
 		return
 	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+func handleStudentsByClass(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/api/students/class/" {
+		http.Error(w, "No id specified", 400)
+		return
+	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/students/class/")
+
+	if (r.Method == "GET") {
+		//Get all students
+		rows, err := DB.Query("SELECT * FROM students WHERE class = ?", id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+
+		var students []Student
+		for rows.Next(){
+			var student Student
+			rows.Scan(&student.Id, &student.Name, &student.Surname, &student.Class.Id)
+			err := DB.QueryRow("SELECT * FROM classes where id = ?", student.Class.Id).Scan(&student.Class.Id, &student.Class.Name)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
+			students = append(students, student)
+		}
+		rows.Close()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(students)
+		return
+	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -132,6 +181,24 @@ func handleTeacher(w http.ResponseWriter, r *http.Request) {
 		for rows.Next() {
 			var teacher Teacher
 			rows.Scan(&teacher.Id, &teacher.Name, &teacher.Surname)
+
+			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", teacher.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			var classes []Class
+			for rows.Next(){
+				var class Class
+				rows.Scan(IGNORE, IGNORE, &class.Id)
+				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+				classes = append(classes, class)
+			}
+			rows.Close()
+			teacher.Classes = classes
+
 			teachers = append(teachers, teacher)
 		}
 		rows.Close()
@@ -150,10 +217,25 @@ func handleTeacher(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 500) {
 			return
 		}
+
 		id, err := result.LastInsertId()
 		if errorCheck(&w, err, 500) {
 			return
 		}
+
+		var classIds []int64
+		err = json.Unmarshal([]byte(r.Form.Get("classes")), &classIds)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+
+		for _, element := range classIds {
+			_, err := DB.Exec("INSERT INTO classes_teachers (teacher_id, class_id) VALUES(?, ?)", id, element)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+		}		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(id)
@@ -180,6 +262,23 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", teacher.Id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+		var classes []Class
+		for rows.Next(){
+			var class Class
+			rows.Scan(IGNORE, IGNORE, &class.Id)
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			classes = append(classes, class)
+		}
+		rows.Close()
+		teacher.Classes = classes
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(teacher)
@@ -194,6 +293,26 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 500) {
 			return
 		}
+
+		if(r.Form.Has("classes")) {
+			_, err := DB.Exec("DELETE FROM classes_teachers WHERE teacher_id = ?", id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
+			var classIds []int64
+			err = json.Unmarshal([]byte(r.Form.Get("classes")), &classIds)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
+			for _, element := range classIds {
+				_, err := DB.Exec("INSERT INTO classes_teachers (teacher_id, class_id) VALUES(?, ?)", id, element)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+			}	
+		}
 		return
 	case "DELETE":
 		// Delete existent teacher
@@ -201,10 +320,15 @@ func handleTeacherById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("DELETE FROM teachers WHERE id = ?", r.Form.Get("id"))
+		_, err = DB.Exec("DELETE FROM teachers WHERE id = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
+		_, err = DB.Exec("DELETE FROM classes_teachers WHERE teacher_id = ?", id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+
 		return
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -239,7 +363,7 @@ func handleRemark(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		result, err := DB.Exec("INSERT INTO remarks (level, description) VALUES(?, ?)", r.Form.Get("level"), r.Form.Get("description"))
+		result, err := DB.Exec("INSERT INTO remarks (skill, level, description) VALUES(?, ?, ?)", r.Form.Get("skill"), r.Form.Get("level"), r.Form.Get("description"))
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -283,7 +407,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("UPDATE remarks SET level = ?, description = ? WHERE id = ?", r.Form.Get("level"), r.Form.Get("description"), id)
+		_, err = DB.Exec("UPDATE remarks SET skill = ?, level = ?, description = ? WHERE id = ?", r.Form.Get("skill"), r.Form.Get("level"), r.Form.Get("description"), id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -294,7 +418,7 @@ func handleRemarkById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("DELETE FROM remarks WHERE id = ?", r.Form.Get("id"))
+		_, err = DB.Exec("DELETE FROM remarks WHERE id = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -322,7 +446,28 @@ func handleObservation(w http.ResponseWriter, r *http.Request) {
 			if errorCheck(&w, err, 500) {
 				return
 			}
-			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
+			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			var classes []Class
+			for rows.Next(){
+				var class Class
+				rows.Scan(IGNORE, IGNORE, &class.Id)
+				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+				classes = append(classes, class)
+			}
+			rows.Close()
+			observation.Teacher.Classes = classes
+
+			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", observation.Student.Class.Id).Scan(&observation.Student.Class.Id, &observation.Student.Class.Name)
 			if errorCheck(&w, err, 500) {
 				return
 			}
@@ -377,11 +522,32 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 500) {
 			return
 		}
+		rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+		var classes []Class
+		for rows.Next(){
+			var class Class
+			rows.Scan(IGNORE, IGNORE, &class.Id)
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			classes = append(classes, class)
+		}
+		rows.Close()
+		observation.Teacher.Classes = classes
+
 		err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
 		if errorCheck(&w, err, 500) {
 			return
 		}
-		err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
+		err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class.Id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+		err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", observation.Student.Class.Id).Scan(&observation.Student.Class.Id, &observation.Student.Class.Name)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -410,7 +576,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 400) {
 			return
 		}
-		_, err = DB.Exec("DELETE FROM observations WHERE id = ?", r.Form.Get("id"))
+		_, err = DB.Exec("DELETE FROM observations WHERE id = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -435,16 +601,37 @@ func handleObservationByStudentId(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 500) {
 			return
 		}
-
 		var observations []Observation
-		for rows.Next() {
+		for rows.Next(){
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
+			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
+			var classes []Class
+			for rows.Next(){
+				var class Class
+				rows.Scan(IGNORE, IGNORE, &class.Id)
+				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+				classes = append(classes, class)
+			}
+			rows.Close()
+			observation.Teacher.Classes = classes
+
 			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
 			if errorCheck(&w, err, 500) {
 				return
 			}
-			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
+			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", observation.Student.Class.Id).Scan(&observation.Student.Class.Id, &observation.Student.Class.Name)
 			if errorCheck(&w, err, 500) {
 				return
 			}
@@ -480,16 +667,37 @@ func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 		if errorCheck(&w, err, 500) {
 			return
 		}
-
 		var observations []Observation
-		for rows.Next() {
+		for rows.Next(){
 			var observation Observation
 			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
+			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+
+			var classes []Class
+			for rows.Next(){
+				var class Class
+				rows.Scan(IGNORE, IGNORE, &class.Id)
+				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+				classes = append(classes, class)
+			}
+			rows.Close()
+			observation.Teacher.Classes = classes
+
 			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
 			if errorCheck(&w, err, 500) {
 				return
 			}
-			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class)
+			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", observation.Student.Class.Id).Scan(&observation.Student.Class.Id, &observation.Student.Class.Name)
 			if errorCheck(&w, err, 500) {
 				return
 			}
@@ -506,6 +714,73 @@ func handleObservationByTeacherId(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(observations)
 		return
 	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+func handleObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/api/observations/teacher/student/" {
+		http.Error(w, "No id specified", 400)
+		return
+	}
+	trimmedString := strings.TrimPrefix(r.URL.Path, "/api/observations/teacher/student/")
+	teacherId := trimmedString[:strings.IndexByte(trimmedString, '/')]
+	studentId := strings.TrimPrefix(trimmedString, teacherId+"/")
+	
+	if(r.Method == "GET") {
+		//Get all observations made by the teacher on the student
+		rows, err := DB.Query("SELECT * FROM observations where teacher = ? and student = ?", teacherId, studentId)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+
+		var observations []Observation
+		for rows.Next(){
+			var observation Observation
+			rows.Scan(&observation.Id, &observation.Teacher.Id, &observation.Student.Id, &observation.Remark.Id, &observation.Achieved, &observation.Date)
+			rows, err := DB.Query("SELECT * FROM classes_teachers WHERE teacher_id = ?", observation.Teacher.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			var classes []Class
+			for rows.Next(){
+				var class Class
+				rows.Scan(IGNORE, IGNORE, &class.Id)
+				err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", class.Id).Scan(&class.Id, &class.Name)
+				if errorCheck(&w, err, 500) {
+					return
+				}
+				classes = append(classes, class)
+			}
+			rows.Close()
+			observation.Teacher.Classes = classes
+
+			err = DB.QueryRow("SELECT * FROM teachers WHERE id = ?", observation.Teacher.Id).Scan(&observation.Teacher.Id, &observation.Teacher.Name, &observation.Teacher.Surname)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM students WHERE id = ?", observation.Student.Id).Scan(&observation.Student.Id, &observation.Student.Name, &observation.Student.Surname, &observation.Student.Class.Id)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", observation.Student.Class.Id).Scan(&observation.Student.Class.Id, &observation.Student.Class.Name)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			err = DB.QueryRow("SELECT * FROM remarks WHERE id = ?", observation.Remark.Id).Scan(&observation.Remark.Id, &observation.Remark.Skill, &observation.Remark.Level, &observation.Remark.Description)
+			if errorCheck(&w, err, 500) {
+				return
+			}
+			observations = append(observations, observation)
+		}
+		rows.Close()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(observations)
+		return
+	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -543,13 +818,14 @@ func main() {
 	}
 	defer DB.Close()
 
-	// Teacher handlers
-	http.HandleFunc("/api/teachers", auth(handleTeacher))
-	http.HandleFunc("/api/teachers/", auth(handleTeacherById))
-
 	// Student handlers
 	http.HandleFunc("/api/students", auth(handleStudent))
 	http.HandleFunc("/api/students/", auth(handleStudentById))
+	http.HandleFunc("/api/students/class/", auth(handleStudentsByClass))
+
+	// Teacher handlers
+	http.HandleFunc("/api/teachers", auth(handleTeacher))
+	http.HandleFunc("/api/teachers/", auth(handleTeacherById))
 
 	// Remark handlers
 	http.HandleFunc("/api/remarks", auth(handleRemark))
@@ -560,6 +836,7 @@ func main() {
 	http.HandleFunc("/api/observations/", auth(handleObservationById))
 	http.HandleFunc("/api/observations/student/", auth(handleObservationByStudentId))
 	http.HandleFunc("/api/observations/teacher/", auth(handleObservationByTeacherId))
+	http.HandleFunc("/api/observations/teacher/student/", auth(handleObservationsByTeacherOnStudent))
 	http.ListenAndServe(":8080", nil)
 }
 
