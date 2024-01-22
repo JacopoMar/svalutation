@@ -95,10 +95,15 @@ func handleStudentById(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		// Get existent student
 		var student Student
-		err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname, &student.Class)
+		err := DB.QueryRow("SELECT * FROM students WHERE id = ?", id).Scan(&student.Id, &student.Name, &student.Surname, &student.Class.Id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
+		err = DB.QueryRow("SELECT * FROM classes WHERE id = ?", student.Class.Id).Scan(&student.Class.Id, &student.Class.Name)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(student)
