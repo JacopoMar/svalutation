@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -567,7 +568,7 @@ func handleObservationById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(observation)
 		return
 	case "PATCH":
-		//Update existent observation
+		// Update existent observation
 		err := r.ParseForm()
 		if errorCheck(&w, err, 400) {
 			return
@@ -824,7 +825,7 @@ func checkCredentials(user string, password string) bool {
 
 	err := DB.QueryRow("SELECT * FROM credentials WHERE user = ?", user).Scan(&credentials.user, &credentials.password)
 	if err != nil {
-		log.Println("Couldn't retrieve credentials") // TODO: Manage this kind of error, it could mean the username the user provided is wrong
+		slog.Error("Couldn't retrieve credentials") // TODO: Manage this kind of error, it could mean the username the user provided is wrong
 	}
 	return bcrypt.CompareHashAndPassword([]byte(credentials.password), []byte(password)) == nil
 }
@@ -839,6 +840,7 @@ func main() {
 	http.HandleFunc("/api/students", auth(handleStudent))
 	http.HandleFunc("/api/students/", auth(handleStudentById))
 	http.HandleFunc("/api/students/class/", auth(handleStudentsByClass))
+	slog.Info("Loaded database")
 
 	// Teacher handlers
 	http.HandleFunc("/api/teachers", auth(handleTeacher))
@@ -854,6 +856,8 @@ func main() {
 	http.HandleFunc("/api/observations/student/", auth(handleObservationByStudentId))
 	http.HandleFunc("/api/observations/teacher/", auth(handleObservationByTeacherId))
 	http.HandleFunc("/api/observations/teacher/student/", auth(handleObservationsByTeacherOnStudent))
+
+	slog.Info("Starting server")
 	http.ListenAndServe(":8080", nil)
 }
 
