@@ -830,17 +830,25 @@ func checkCredentials(user string, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(credentials.password), []byte(password)) == nil
 }
 
+func statusCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func main() {
 	if DB_ERR != nil {
 		log.Fatal(DB_ERR)
 	}
 	defer DB.Close()
 
+	slog.Info("Loaded database")
+
+	// Status handler
+	http.HandleFunc("/status", statusCheck)
+
 	// Student handlers
 	http.HandleFunc("/api/students", auth(handleStudent))
 	http.HandleFunc("/api/students/", auth(handleStudentById))
 	http.HandleFunc("/api/students/class/", auth(handleStudentsByClass))
-	slog.Info("Loaded database")
 
 	// Teacher handlers
 	http.HandleFunc("/api/teachers", auth(handleTeacher))
