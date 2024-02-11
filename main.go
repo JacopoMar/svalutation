@@ -703,18 +703,18 @@ func getObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+}
+
 func auth(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, _ := r.BasicAuth()
 
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+		enableCors(&w)
 
 		if !checkCredentials(user, pass) {
 			w.Header().Set("WWW-Authenticate", "Basic realm=\"Svalutation\"")
@@ -752,6 +752,9 @@ func main() {
 	slog.Info("Loaded database")
 
 	mux := http.NewServeMux()
+
+	// CORS OPTIONS handler
+	mux.HandleFunc("OPTIONS /", func(w http.ResponseWriter, r *http.Request) { enableCors(&w); w.WriteHeader(http.StatusOK) })
 
 	// Status handler
 	mux.HandleFunc("GET /status", statusCheck)
