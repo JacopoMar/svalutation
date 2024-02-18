@@ -99,9 +99,29 @@ func updateStudent(w http.ResponseWriter, r *http.Request) {
 	if errorCheck(&w, err, 400) {
 		return
 	}
-	_, err = DB.Exec("UPDATE students SET name = ?, surname = ?, class = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), r.Form.Get("class"), id)
-	if errorCheck(&w, err, 500) {
-		return
+
+	var form_name string = r.Form.Get("name")
+	if form_name != "" {
+		_, err = DB.Exec("UPDATE students SET name = ? WHERE id = ?", form_name, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_surname string = r.Form.Get("surname")
+	if form_surname != "" {
+		_, err = DB.Exec("UPDATE students SET surname = ? WHERE id = ?", form_surname, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_class string = r.Form.Get("class")
+	if form_class != "" {
+		_, err = DB.Exec("UPDATE students SET class = ? WHERE id = ?", form_class, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
 	}
 	return
 }
@@ -261,19 +281,32 @@ func updateTeacher(w http.ResponseWriter, r *http.Request) {
 	if errorCheck(&w, err, 400) {
 		return
 	}
-	_, err = DB.Exec("UPDATE teachers SET name = ?, surname = ? WHERE id = ?", r.Form.Get("name"), r.Form.Get("surname"), id)
-	if errorCheck(&w, err, 500) {
-		return
+
+	var form_name string = r.Form.Get("name")
+	if form_name != "" {
+		_, err = DB.Exec("UPDATE teachers SET name = ? WHERE id = ?", form_name, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
 	}
 
-	if r.Form.Has("classes") {
+	var form_surname string = r.Form.Get("surname")
+	if form_surname != "" {
+		_, err = DB.Exec("UPDATE teachers SET surname = ? WHERE id = ?", form_surname, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_classes string = r.Form.Get("classes")
+	if form_classes != "" && form_classes != "[]" {
 		_, err := DB.Exec("DELETE FROM classes_teachers WHERE teacher_id = ?", id)
 		if errorCheck(&w, err, 500) {
 			return
 		}
 
 		var classIds []int64
-		err = json.Unmarshal([]byte(r.Form.Get("classes")), &classIds)
+		err = json.Unmarshal([]byte(form_classes), &classIds)
 		if errorCheck(&w, err, 500) {
 			return
 		}
@@ -368,9 +401,29 @@ func updateRemark(w http.ResponseWriter, r *http.Request) {
 	if errorCheck(&w, err, 400) {
 		return
 	}
-	_, err = DB.Exec("UPDATE remarks SET skill = ?, level = ?, description = ? WHERE id = ?", r.Form.Get("skill"), r.Form.Get("level"), r.Form.Get("description"), id)
-	if errorCheck(&w, err, 500) {
-		return
+
+	var form_skill string = r.Form.Get("skill")
+	if form_skill != "" {
+		_, err = DB.Exec("UPDATE remarks SET skill = ? WHERE id = ?", form_skill, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_level string = r.Form.Get("level")
+	if form_level != "" {
+		_, err = DB.Exec("UPDATE remarks SET level = ? WHERE id = ?", form_level, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_description string = r.Form.Get("description")
+	if form_description != "" {
+		_, err = DB.Exec("UPDATE remarks SET description = ? WHERE id = ?", form_description, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
 	}
 	return
 }
@@ -516,9 +569,37 @@ func updateObservation(w http.ResponseWriter, r *http.Request) {
 	if errorCheck(&w, err, 400) {
 		return
 	}
-	_, err = DB.Exec("UPDATE observations SET teacher = ?, student = ?, remark = ?, achieved = ? WHERE id = ?", r.Form.Get("teacher"), r.Form.Get("student"), r.Form.Get("remark"), r.Form.Get("achieved"), id)
-	if errorCheck(&w, err, 500) {
-		return
+
+	var form_teacher string = r.Form.Get("teacher")
+	if form_teacher != "" {
+		_, err = DB.Exec("UPDATE observations SET teacher = ? WHERE id = ?", form_teacher, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_student string = r.Form.Get("student")
+	if form_student != "" {
+		_, err = DB.Exec("UPDATE observations SET student = ? WHERE id = ?", form_student, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_remark string = r.Form.Get("remark")
+	if form_remark != "" {
+		_, err = DB.Exec("UPDATE observations SET remark = ? WHERE id = ?", form_remark, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
+	}
+
+	var form_achieved string = r.Form.Get("achieved")
+	if form_achieved != "" {
+		_, err = DB.Exec("UPDATE observations SET achieved = ? WHERE id = ?", form_achieved, id)
+		if errorCheck(&w, err, 500) {
+			return
+		}
 	}
 	return
 }
@@ -537,7 +618,7 @@ func deleteObservation(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func getObservationsByStudent(w http.ResponseWriter, r *http.Request) {
+func getObservationsOnStudent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	rows, err := DB.Query("SELECT * FROM observations where student = ?", id)
@@ -789,11 +870,11 @@ func main() {
 	mux.HandleFunc("GET /api/observations", auth(getAllObservations))
 	mux.HandleFunc("POST /api/observations", auth(createObservation))
 
-	mux.HandleFunc("GET /api/observations/{id}", auth(getRemark))
-	mux.HandleFunc("PATCH /api/observations/{id}", auth(updateRemark))
-	mux.HandleFunc("DELETE /api/observations/{id}", auth(deleteRemark))
+	mux.HandleFunc("GET /api/observations/{id}", auth(getObservation))
+	mux.HandleFunc("PATCH /api/observations/{id}", auth(updateObservation))
+	mux.HandleFunc("DELETE /api/observations/{id}", auth(deleteObservation))
 
-	mux.HandleFunc("GET /api/observations/student/{id}", auth(getObservationsByStudent))
+	mux.HandleFunc("GET /api/observations/student/{id}", auth(getObservationsOnStudent))
 	mux.HandleFunc("GET /api/observations/teacher/{id}", auth(getObservationsByTeacher))
 	mux.HandleFunc("GET /api/observations/teacher/{teacherId}/student/{studentId}", auth(getObservationsByTeacherOnStudent))
 
