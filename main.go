@@ -785,7 +785,7 @@ func getObservationsByTeacherOnStudent(w http.ResponseWriter, r *http.Request) {
 }
 
 func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://85.235.150.118:3000")
 	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
 	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
